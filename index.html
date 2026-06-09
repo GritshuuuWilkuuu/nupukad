@@ -1,0 +1,889 @@
+<!DOCTYPE html>
+<html lang="et">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>1.-2. klassi nupukad tekstülesanded</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@300..700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Fredoka', sans-serif;
+        }
+    </style>
+</head>
+<body class="bg-gradient-to-br from-indigo-100 to-pink-100 min-h-screen flex items-center justify-center p-4">
+
+    <div class="bg-white rounded-3xl shadow-xl p-6 md:p-8 max-w-2xl w-full border-4 border-indigo-200">
+        
+        <div id="quiz-container">
+            <div class="flex justify-between items-center mb-4">
+                <span class="text-indigo-600 font-bold text-lg" id="progress-text">Küsimus 1/10</span>
+                <span class="bg-amber-100 text-amber-800 font-bold px-3 py-1 rounded-full text-sm" id="score-text">Skoor: 0</span>
+            </div>
+            
+            <div class="w-full bg-gray-200 rounded-full h-3 mb-6">
+                <div id="progress-bar" class="bg-indigo-500 h-3 rounded-full transition-all duration-300" style="width: 10%"></div>
+            </div>
+
+            <h2 class="text-xl md:text-2xl text-gray-800 font-semibold mb-6 min-h-[80px]" id="question-text">
+                Laetakse küsimust...
+            </h2>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6" id="options-container">
+                </div>
+
+            <div id="feedback-container" class="hidden bg-gray-50 rounded-2xl p-4 border-2 border-dashed border-gray-300 mb-6">
+                <div class="flex items-center mb-2">
+                    <span id="feedback-icon" class="text-2xl mr-2"></span>
+                    <h3 id="feedback-title" class="font-bold text-lg"></h3>
+                </div>
+                <p id="rationale-text" class="text-gray-600 mb-4"></p>
+                <button id="next-btn" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 px-6 rounded-xl transition shadow-md active:scale-95">
+                    Järgmine küsimus →
+                </button>
+            </div>
+        </div>
+
+        <div id="result-container" class="hidden text-center py-8">
+            <span class="text-6xl mb-4 block">🎉</span>
+            <h2 class="text-3xl font-bold text-gray-800 mb-2">Viktoriin lõppes!</h2>
+            <p class="text-xl text-gray-600 mb-6" id="final-score-text">Sinu tulemus: 0 / 10</p>
+            
+            <p class="text-lg font-medium text-indigo-600 mb-8 px-4" id="feedback-message"></p>
+            
+            <button id="restart-btn" class="bg-emerald-500 hover:bg-emerald-600 text-white font-bold text-lg py-4 px-8 rounded-2xl transition shadow-lg transform active:scale-95">
+                🔄 Alusta uuesti
+            </button>
+        </div>
+
+    </div>
+
+    <script>
+        // Kõik 100 nupukat ülesannet koos vastuste ja selgitustega
+        const allQuestions = [
+            {
+                question: "Suvevaheajal lähen vanematega reisima. Oleme ära täpselt 2 nädalat. Sellest ajast 6 päeva veedame Berliinis, ülejäänud aja Roomas. Mitu päeva me veedame Roomas?",
+                options: ["6 päeva", "8 päeva", "10 päeva", "12 päeva"], correct: 1,
+                rationale: "Kahes nädalas on 14 päeva. Kui lahutada Berliini 6 päeva, jääb Roomale 8 päeva (14 - 6 = 8)."
+            },
+            {
+                question: "Mallel on 5 õuna. Kallel on 3 õuna rohkem kui Mallel. Mitu õuna on neil kahe peale kokku?",
+                options: ["8 õuna", "11 õuna", "13 õuna", "15 õuna"], correct: 2,
+                rationale: "Kallel on 5 + 3 = 8 õuna. Kokku on neil seega 5 + 8 = 13 õuna."
+            },
+            {
+                question: "Mari seisab poejärjekorras. Tema ees on 3 inimest ja tema taga on 4 inimest. Mitu inimest on kokku järjekorras?",
+                options: ["7 inimest", "8 inimest", "9 inimest", "10 inimest"], correct: 1,
+                rationale: "Järjekorras on 3 inimest ees, 4 taga ja lisaks Mari ise, mis teeb kokku 3 + 4 + 1 = 8 inimest."
+            },
+            {
+                question: "Laual põles 7 küünalt. Tuul puhus neist 3 küünalt kustu. Ülejäänud põlesid lõpuni. Mitu küünalt on laual alles järgmisel hommikul?",
+                options: ["0 küünalt", "3 küünalt", "4 küünalt", "7 küünalt"], correct: 1,
+                rationale: "Alles jäävad just need 3 küünalt, mis tuul ära kustutas. Ülejäänud 4 küünalt põlesid täiesti lõpuni ära ja sulasid olematuks."
+            },
+            {
+                question: "Puuriidal istub 5 varblast. Kass kargas ja püüdid neist ühe kinni. Mitu varblast jäi puuriidale?",
+                options: ["0 varblast", "4 varblast", "5 varblast", "1 varblane"], correct: 0,
+                rationale: "Kuna kass tegi rünnates suurt lärmi ja hirmutas linde, lendasid ülejäänud 4 varblast kohe minema."
+            },
+            {
+                question: "Pillel on kaks venda ja üks õde. Mitu last on selles peres kokku?",
+                options: ["3 last", "4 last", "5 last", "2 last"], correct: 1,
+                rationale: "Peres on kaks venda, üks õde ja ka Pille ise on selle pere laps, seega kokku on 4 last."
+            },
+            {
+                question: "Karbis on punased ja sinised pliiatsid, kokku 6 pliiatsit. Punaseid pliiatseid on rohkem kui siniseid. Mis on kõige väiksem võimalik punaste pliiatsite arv karbis?",
+                options: ["3 pliiatsit", "4 pliiatsit", "5 pliiatsit", "6 pliiatsit"], correct: 1,
+                rationale: "If mõlemaid oleks võrdselt, oleks neid 3 ja 3. Kuna punaseid on rohkem, peab neid olema vähemalt 4."
+            },
+            {
+                question: "Ema jagas 6 õuna kahe poja vahel nii, et vanem poeg sai 2 õuna rohkem kui noorem. Mitu õuna sai noorem poeg?",
+                options: ["2 õuna", "3 õuna", "4 õuna", "1 õun"], correct: 0,
+                rationale: "Noorem sai 2 ja vanem sai 4 õuna. See teeb kokku 6 õuna ning vanemal on täpselt 2 õuna rohkem."
+            },
+            {
+                question: "Laual on ritta pandud 5 taldrikut. Iga kahe taldriku vahele on pandud üks kahvel. Mitu kahvlit on laual?",
+                options: ["4 kahvlit", "5 kahvlit", "6 kahvlit", "3 kahvlit"], correct: 0,
+                rationale: "Viie taldriku vahele tekib reas täpselt 4 vahet, seega on laual 4 kahvlit."
+            },
+            {
+                question: "Kaks isa ja kaks poega läksid kalale. Nad püüdsid kokku 3 kala ja igaüks sai täpselt ühe kala. Mitu inimest kalal käis?",
+                options: ["2 inimest", "3 inimest", "4 inimest", "5 inimest"], correct: 1,
+                rationale: "Kalal käisid vanaisa, isa ja poeg. Vanaisa ja isa on kaks isa, ning isa ja poeg on kaks poega."
+            },
+            {
+                question: "Jänesel on 4 porgandit, karul on poole vähem. Mitu porgandit on neil kokku?",
+                options: ["2 porgandit", "4 porgandit", "6 porgandit", "8 porgandit"], correct: 2,
+                rationale: "Karul on poole vähem ehk 2 porgandit. Kokku on neil 4 + 2 = 6 porgandit."
+            },
+            {
+                question: "Laual on 3 tassi. Ema pööras neist 2 tükki tagurpidi. Mitu tassi on nüüd laual?",
+                options: ["1 tass", "2 tassi", "3 tassi", "0 tassi"], correct: 2,
+                rationale: "Tasside ümberpööramine ei muuda nende arvu – laual on ikka alles kõik 3 tassi."
+            },
+            {
+                question: "Kummas käes on tüdrukul tavaliselt rohkem sõrmi, kas vasakus või paremas?",
+                options: ["Vasakus käes", "Paremas käes", "Mõlemas on võrdselt", "Sõltub tüdrukust"], correct: 2,
+                rationale: "Inimesel on nii vasakus kui ka paremas käes 5 sõrme, seega on neis sõrmi võrdselt."
+            },
+            {
+                question: "Puu otsas istus 6 varest. Kaks varest lendasid sama puu teisele oksale. Mitu varest on nüüd puu otsas?",
+                options: ["4 varest", "6 varest", "8 varest", "2 varest"], correct: 1,
+                rationale: "Kuna varesed ei lennanud puu otsast ära, vaid vahetasid ainult oksa, on neid puul ikka kokku 6."
+            },
+            {
+                question: "Karbis on kollased ja rohelised pallid, kokku 5 palli. Kollaseid on vähem kui rohelisi. Mis on suurim võimalik kollaste pallide arv?",
+                options: ["1 pall", "2 palli", "3 palli", "4 palli"], correct: 1,
+                rationale: "If kollaseid oleks 2 ja rohelisi 3, on kollaseid vähem. 3 kollase puhul oleks neid juba rohelistest rohkem."
+            },
+            {
+                question: "Teet ja Peeter jooksevad võidu. Teet möödub teisest jooksvast poisist. Mis kohal Teet nüüd jookseb?",
+                options: ["Esimesel kohal", "Teisel kohal", "Kolmandal kohal", "Viimasel kohal"], correct: 1,
+                rationale: "Möödudes teisest jooksvast poisist võtab Teet endale tema koha, mis tähendab, et ta on nüüd teisel kohal."
+            },
+            {
+                question: "Kui lõikad ühe nööri kolmeks tükiks, mitu korda pead kääridega lõikama?",
+                options: ["1 kord", "2 korda", "3 korda", "4 korda"], correct: 1,
+                rationale: "Nööri kolmeks tükiks jagamiseks piisab täpselt kahest lõikest."
+            },
+            {
+                question: "Toas põleb 3 lampi. Isa lülitas neist 2 tükki välja. Mitu lampi jäi tuppa?",
+                options: ["1 lamp", "2 lampi", "3 lampi", "0 lampi"], correct: 2,
+                rationale: "Lampide väljalülitamine ei muuda nende asukohta ega arvu, tuppa jäi ikka 3 lampi."
+            },
+            {
+                question: "Muna keeb pehmeks 3 minutiga. Mitu minutit kulub 3 muna korraga ühes potis keetmiseks?",
+                options: ["1 minut", "3 minutit", "6 minutit", "9 minutit"], correct: 1,
+                rationale: "Kuna kõik munad keevad potis koos ja üheaegselt, kulub ikkagi täpselt 3 minutit."
+            },
+            {
+                question: "Ühel paadil on 2 aeru. Mitu aeru on kolmel sellisel paadil kokku?",
+                options: ["3 aeru", "5 aeru", "6 aeru", "8 aeru"], correct: 2,
+                rationale: "Kolmel paadil on kokku 2 + 2 + 2 = 6 aeru."
+            },
+            {
+                question: "Koer kaalub kahel tagumisel jalal seistes 4 kilo. Kui palju kaalub ta neljal jalal seistes?",
+                options: ["2 kilo", "4 kilo", "8 kilo", "6 kilo"], correct: 1,
+                rationale: "Koera raskus ja kaal ei muutu sellest, mitme jala peal ta parasjagu püsti seisab."
+            },
+            {
+                question: "Pimedas toas on küünal, petrooleumilamp ja gaasipliit. Sul on käes üks tuletikk. Mille süütad esimesena?",
+                options: ["Küünla", "Petrooleumilambi", "Gaasipliidi", "Tuletiku"], correct: 3,
+                rationale: "Selleks, et üldse midagi muud põlema panna, pead sa esimese asjana põlema tõmbama tuletiku."
+            },
+            {
+                question: "Mis on raskem, kas 1 kilo rauda või 1 kilo pehmet vatti?",
+                options: ["1 kilo rauda", "1 kilo vatti", "Mõlemad on üheraskused", "Raud on alati raskem"], correct: 2,
+                rationale: "Mõlemad asjad kaaluvad täpselt 1 kilo, seega on nad täiesti üheraskused."
+            },
+            {
+                question: "Kummal on rohkem jalgu kokku, kas kahel kassil või kolmel kanal?",
+                options: ["Kassidel", "Kanadel", "Neil on võrdselt", "Kanadel on rohkem"], correct: 0,
+                rationale: "Kahel kassil on kokku 8 jalga (4+4), kolmel kanal on aga kokku 6 jalga (2+2+2)."
+            },
+            {
+                question: "Jüri on oma venna Antonist praegu 2 aastat vanem. Mitu aastat on Jüri vanem Antonist 5 aasta pärast?",
+                options: ["2 aastat", "5 aastat", "7 aastat", "3 aastat"], correct: 0,
+                rationale: "Mõlemad vennad kasvavad igal aastal ühe aasta võrra vanemaks, seega nende vanusevahe jääb alati samaks."
+            },
+            {
+                question: "Puul kasvas 8 pirni. Tuli tugev tuuletorm ja puhus kõik õunad maha. Mitu pirni jäi puu otsa?",
+                options: ["0 pirni", "8 pirni", "4 pirni", "2 pirni"], correct: 1,
+                rationale: "Tuul puhus maha õunad, aga puu otsas kasvasid pirnid. Kõik 8 pirni jäävad puu otsa alles."
+            },
+            {
+                question: "Mitme otsaga on poolteist keppi kokku?",
+                options: ["2 otsaga", "3 otsaga", "4 otsaga", "6 otsaga"], correct: 2,
+                rationale: "Ühel tervel kepil on 2 otsa ja ka pooleks murtud kepil on 2 otsa. Kokku teeb see 4 otsa."
+            },
+            {
+                question: "Minu vanaemal on üks kass, üks koer ja kaks papagoid. Mitu neljajalgset lemmiklooma on vanaemal?",
+                options: ["4 lemmiklooma", "2 lemmiklooma", "1 lemmikloom", "3 lemmiklooma"], correct: 1,
+                rationale: "Kassil ja koeral on 4 jalga, kuid papagoidel on vaid 2 jalga. Neljajalgseid loomi on seega 2."
+            },
+            {
+                question: "Toas on 4 nurka. Igas nurgas istub üks kass. Iga kassi vastas istub täpselt 3 kassi. Mitu kassi on toas kokku?",
+                options: ["4 kassi", "12 kassi", "7 kassi", "3 kassi"], correct: 0,
+                rationale: "Kuna igast nurgast vaatab kass teise kolme nurga kassi, ongi toas kokku ainult need 4 kassi."
+            },
+            {
+                question: "Jõe ääres oli 5 tüdrukut. Iga tüdruk ujus üle jõe täpselt ühe korra. Mitu korda ujuti üle jõe kokku?",
+                options: ["1 kord", "4 korda", "5 korda", "10 korda"], correct: 2,
+                rationale: "Kuna igaüks viiest tüdrukust tegi ühe ujumise, ujuti üle jõe kokku 5 korda."
+            },
+            {
+                question: "If sa võtad viiest laual olevast õunast kolm õuna endale, mitu õuna sul siis on?",
+                options: ["2 õuna", "3 õuna", "5 õuna", "0 õuna"], correct: 1,
+                rationale: "Sul on just need 3 õuna, mis sa laualt endale kätte võtsid."
+            },
+            {
+                question: "Mitu sammu teeb väike varblane ühe minutiga?",
+                options: ["10 sammu", "0 sammu", "5 sammu", "50 sammu"], correct: 1,
+                rationale: "Varblased ei kõni sammudega nagu inimesed, vaid nad hüppavad kahe jalaga korraga."
+            },
+            {
+                question: "Veoauto sõitis maale külla. Temale vastu sõitis 3 sõiduautot. Mitu autot sõitis maale külla?",
+                options: ["1 auto", "3 autot", "4 autot", "0 autot"], correct: 0,
+                rationale: "Ainult veoauto sõitis maale külla. Need 3 sõiduautot sõitsid talle ju vastu ehk maalt ära."
+            },
+            {
+                question: "Pargis oli 4 pinki. Kaks neist värviti roheliseks. Mitu pinki on pargis alles?",
+                options: ["2 pinki", "4 pinki", "6 pinki", "0 pinki"], correct: 1,
+                rationale: "Värvimine ei pane pinke kaduma, pargis on ikka alles kõik 4 pinki."
+            },
+            {
+                question: "Ta on minu isa poeg, aga ta ei ole minu vend. Kes ta on?",
+                options: ["Minu õde", "Mina ise", "Minu vanaisa", "Minu onu"], correct: 1,
+                rationale: "Sinu isa poeg, kes ei ole sinu vend, saad olla ainult sina ise."
+            },
+            {
+                question: "Mis värvi on hobune, kes jookseb talvel lumisel väljal ja keda pole valge lume taustal üldse näha?",
+                options: ["Must", "Pruun", "Hall", "Valge"], correct: 3,
+                rationale: "Teda pole lume taustal näha, sest ta on ise samuti valget värvi."
+            },
+            {
+                question: "Kuuse otsas kasvas 5 suurt käbi ja 3 tammetõru. Mitu tammetõru kasvas kuuse otsas kokku?",
+                options: ["3 tammetõru", "5 tammetõru", "0 tammetõru", "8 tammetõru"], correct: 2,
+                rationale: "Kuuse otsas kasvavad ainult käbid. Tammetõrud kasvavad tamme otsas."
+            },
+            {
+                question: "Kaks poissi mängisid malet kokku täpselt 2 tundi. Mitu tundi mängis kumbki poiss?",
+                options: ["1 tund", "2 tundi", "4 tundi", "3 tundi"], correct: 1,
+                rationale: "Kuna nad mängisid koos sama mängu üheaegselt, mängis kumbki poiss 2 tundi."
+            },
+            {
+                question: "Ema ostis lastele 4 paari talvekindaid. Mitu kinnast ostis ema vasaku käe jaoks?",
+                options: ["4 kinnast", "2 kinnast", "8 kinnast", "1 kinnas"], correct: 0,
+                rationale: "Igas kindapaaris on üks vasak ja üks parem kinnas. Neljas paaris on seega 4 vasaku käe kinnast."
+            },
+            {
+                question: "Laual on puuviljade rida: banaan, õun, pirn, banaan, õun, pirn. Mis vili peab olema järgmine?",
+                options: ["Õun", "Pirn", "Banaan", "Apelsin"], correct: 2,
+                rationale: "Rida kordub kolme vilja kaupa: banaan, õun, pirn. Pärast pirni algab muster uuesti banaaniga."
+            },
+            {
+                question: "Ühel jänesel on 2 pikka kõrvu. Mitu kõrvu on kolmel jänesel kokku?",
+                options: ["3 kõrvu", "5 kõrvu", "6 kõrvu", "4 kõrvu"], correct: 2,
+                rationale: "Kolmel jänesel on kokku 2 + 2 + 2 = 6 kõrvu."
+            },
+            {
+                question: "Kummal on rohkem rattaid kokku, kas kahel kaherattalisel jalgrattal või ühel kolmerattalisel rattal?",
+                options: ["Jalgratastel", "Kolmerattalisel", "Neil on võrdselt", "Ei tea"], correct: 0,
+                rationale: "Kahel jalgrattal on kokku 4 ratast (2+2), mis on rohkem kui kolmerattalise ratta 3 ratast."
+            },
+            {
+                question: "Laps ehitas lumememme, millel on 3 palli. Tema sõber tegi lumememme, millel on 2 palli. Mitu lumepalli nad kokku veeretasid?",
+                options: ["3 palli", "5 palli", "2 palli", "6 palli"], correct: 1,
+                rationale: "Kokku veeretasid lapsed 3 + 2 = 5 lumepalli."
+            },
+            {
+                question: "Raamatus on leheküljed numbritega 1, 2, 3, 4, 5. Mitu korda on nendel lehtedel kirjas number 3?",
+                options: ["1 kord", "3 korda", "2 korda", "5 korda"], correct: 0,
+                rationale: "Numbrit 3 kasutatakse nendest lehtedest ainult leheküljel number 3, ehk täpselt ühe korra."
+            },
+            {
+                question: "Jaanalind peitis oma pea liiva alla. Mitu jalga on maapinnal näha?",
+                options: ["0 jalga", "1 jalg", "2 jalga", "4 jalga"], correct: 2,
+                rationale: "Pea peitmine ei muuda jalgade arvu – jaanalinnul on ikka 2 jalga näha."
+            },
+            {
+                question: "Korvis on 3 rohelist ja 3 punast õuna. Mitu õuna pead silmad kinni võtma, et sul oleks kindlasti vähemalt üks punane õun?",
+                options: ["1 õun", "3 õuna", "4 õuna", "6 õuna"], correct: 2,
+                rationale: "Halvimal juhul võtad järjest kõik 3 rohelist õuna. Neljas õun on sel juhul kindlasti punane."
+            },
+            {
+                question: "Riiulil on reas 5 raamatut. Matemaatika õpik on vasakult teine. Mitmes on see paremalt poolt loendades?",
+                options: ["Teine", "Kolmas", "Neljas", "Viies"], correct: 2,
+                rationale: "If reas on 5 raamatut, siis tagantpoolt lugedes on kohad: 5. (esimene), 4. (teine), 3. (kolmas) ja 2. ongi neljas."
+            },
+            {
+                question: "Koeral on 4 käppa ja väikesel linnul on 2 jalga. Mitu jalga-käppa on neil kokku?",
+                options: ["4", "2", "6", "8"], correct: 2,
+                rationale: "Kokku on neil kahel loomal 4 + 2 = 6 jalga ehk käppa."
+            },
+            {
+                question: "Liisi joonistas paberile suure ringi. Selle ringi sisse joonistas ta veel ühe väikese ringi. Mitu ringi joonistas Liisi kokku?",
+                options: ["1 ring", "2 ringi", "3 ringi", "0 ringi"], correct: 1,
+                rationale: "Liisi joonistas ühe suure ja ühe väikese ringi, mis teeb kokku täpselt 2 ringi."
+            },
+            {
+                question: "If sa seisad peegli ees ja tõstad oma vasaku käe, siis millise käe tõstab sinu peegelpilt?",
+                options: ["Vasaku käe", "Parema käe", "Mõlemad käed", "Mitte ühtegi"], correct: 1,
+                rationale: "Kuna peegelpilt seisab sinu vastas näoga sinu poole, on sinu vasak käsi tema vaates parem käsi."
+            },
+            // JÄRGMISED 50 ÜLESANNET (Uued loogika- ja arvutusülesanded 1.-2. klassile)
+            {
+                question: "Kati on lühem kui Mati, aga pikem kui Juku. Kes on neist kolmest kõige pikem?",
+                options: ["Kati", "Mati", "Juku", "Kõik on ühepikkused"], correct: 1,
+                rationale: "Kuna Mati on Katist pikem ja Kati on Jukust pikem, siis on Mati neist kõige pikem."
+            },
+            {
+                question: "Karbil on 4 nurka. Ema lõikas ühe nurga kääridega otse maha. Mitu nurka on karbil nüüd?",
+                options: ["3 nurka", "4 nurka", "5 nurka", "6 nurka"], correct: 2,
+                rationale: "Ühe nurga äralõikamisel tekib sinna kohta kaks uut nurka, seega nurkade arv suureneb: 4 - 1 + 2 = 5."
+            },
+            {
+                question: "Klassis on 10 õpilast. Täna tuli kooli 4 poissi vähem kui tüdrukuid. Mitu tüdrukut on täna klassis?",
+                options: ["3 tüdrukut", "5 tüdrukut", "7 tüdrukut", "6 tüdrukut"], correct: 2,
+                rationale: "If tüdrukuid on 7 ja poisse 4 võrra vähem ehk 3, siis on kokku täpselt 7 + 3 = 10 õpilast."
+            },
+            {
+                question: "Tee kõrval kasvas ritta istutatuna 6 tamme. Igale tammele seoti ümber üks punane lint. Mitu linti kulus kokku?",
+                options: ["5 linti", "6 linti", "7 linti", "12 linti"], correct: 1,
+                rationale: "Kuna igale puule läks täpselt üks lint, siis 6 puu jaoks kulus ka täpselt 6 linti."
+            },
+            {
+                question: "Bussis oli 8 reisijat. Esimeses peatuses astus 3 inimest bussi juurde ja keegi ei läinud maha. Mitu reisijat on bussi peal nüüd?",
+                options: ["5 reisijat", "8 reisijat", "11 reisijat", "10 reisijat"], correct: 2,
+                rationale: "Bussis oli 8 inimest, liidame 3 juurde tulnud inimest ja saame kokku 11 reisijat."
+            },
+            {
+                question: "Kell on praegu täpselt 3. Mitu tundi peab mööduma, et kell oleks 7?",
+                options: ["3 tundi", "4 tundi", "5 tundi", "7 tundi"], correct: 1,
+                rationale: "Arvust 3 arvuni 7 on täpselt 4 sammu ehk tundi (7 - 3 = 4)."
+            },
+            {
+                question: "Oskari taskus on üks 5-eurone, üks 2-eurone ja üks 1-eurone münt. Mitu eurot on Oskaril kokku?",
+                options: ["6 eurot", "7 eurot", "8 eurot", "3 eurot"], correct: 2,
+                rationale: "Liidame rahad kokku: 5 + 2 + 1 = 8 eurot."
+            },
+            {
+                question: "Laual on kaks taldrikut. Ühel on 4 küpsist ja teisel on 8 küpsist. Mitu küpsist tuleb teiselt taldrikult esimesele tõsta, et mõlemal oleks võrdselt?",
+                options: ["2 küpsist", "4 küpsist", "3 küpsist", "1 küpsis"], correct: 0,
+                rationale: "Kokku on 12 küpsist, ehk mõlemal peab olema 6. Kui tõstame 8-st kaks tükki ära, jääb sinna 6 ja teisele tekib 4 + 2 = 6."
+            },
+            {
+                question: "Jänes hüppab pika hüppega üle 2 meetri. Mitu meetrit läbib jänes 3 sellise hüppega?",
+                options: ["4 meetrit", "5 meetrit", "6 meetrit", "8 meetrit"], correct: 2,
+                rationale: "Kolm hüpet, igaüks 2 meetrit, teeb kokku 2 + 2 + 2 = 6 meetrit."
+            },
+            {
+                question: "Karu ärkas kevadest täpselt 1 nädal enne mai algust. Mis kuus karu ärkas?",
+                options: ["Märtsis", "Aprillis", "Mais", "Juunis"], correct: 1,
+                rationale: "Mai kuule eelneb aprill, seega üks nädal enne mai algust on ikka veel aprillikuu."
+            },
+            {
+                question: "Leida ehitas klotsidest torni, mis on 12 klotsi kõrge. Ta võttis sealt pealt 4 klotsi ära. Mitu klotsi jäi torni alles?",
+                options: ["6 klotsi", "8 klotsi", "10 klotsi", "16 klotsi"], correct: 1,
+                rationale: "Lahutame algsest kõrgusest ära võetud klotsid: 12 - 4 = 8 klotsi."
+            },
+            {
+                question: "Kaks sõpra elavad ühes majas. Uno elab 2. korrusel, aga Leo elab 3 korrust kõrgemal. Mis korrusel elab Leo?",
+                options: ["3. korrusel", "4. korrusel", "5. korrusel", "6. korrusel"], correct: 2,
+                rationale: "Uno elab 2. korrusel. Liidame sellele 3 korrust ja saame Leo korruseks 2 + 3 = 5."
+            },
+            {
+                question: "Minu koeral on kaks kutsikat. Mitu saba on neil kõigil kolmel kokku?",
+                options: ["1 saba", "2 saba", "3 saba", "4 saba"], correct: 2,
+                rationale: "Emasel koeral on 1 saba ja kummalgi kutsikal on 1 saba. Kokku on neil 3 saba."
+            },
+            {
+                question: "Eile oli teisipäev. Mis päev on homme?",
+                options: ["Kolmapäev", "Neljapäev", "Reede", "Teisipäev"], correct: 1,
+                rationale: "If eile oli teisipäev, siis täna on kolmapäev ja homme on neljapäev."
+            },
+            {
+                question: "Karbis on 20 kommi. Oliver sõi neist poole ära. Mitu kommi jäi karpi alles?",
+                options: ["5 kommi", "10 kommi", "15 kommi", "12 kommi"], correct: 1,
+                rationale: "Arvu 20 pool on täpselt 10, sest 10 + 10 = 20."
+            },
+            {
+                question: "Ühes rühmas on 6 poissi. Iga poiss joonistas ühe auto. Mitu autonat on paberitel kokku?",
+                options: ["1 auto", "3 autot", "6 autot", "12 autot"], correct: 2,
+                rationale: "Kuna 6 poissi tegid igaüks ühe joonistuse, on autosid kokku täpselt 6."
+            },
+            {
+                question: "Vanaisal on 3 paari saapaid. Mitu saabast on vanaisal kokku?",
+                options: ["3 saabast", "5 saabast", "6 saabast", "9 saabast"], correct: 2,
+                rationale: "Ühes paaris on 2 saabast. Kolmes paaris on kokku 2 + 2 + 2 = 6 saabast."
+            },
+            {
+                question: "Aias õitses 9 lillat lille ja mõned kollased lilled. Kollaseid lilli oli 5 võrra vähem kui lillasid. Mitu kollast lille õitses aias?",
+                options: ["4 kollast lille", "5 kollast lille", "14 kollast lille", "6 kollast lille"], correct: 0,
+                rationale: "Lahutame lillade lillede arvust viis: 9 - 5 = 4 kollast lille."
+            },
+            {
+                question: "Poiss mõtles ühe arvu. Kui ta liitis sellele arvule 3, sai ta tulemuseks 10. Mis arvu poiss mõtles?",
+                options: ["5", "6", "7", "8"], correct: 2,
+                rationale: "Saame teada, kui lahutame lõpptulemusest liidetud arvu: 10 - 3 = 7."
+            },
+            {
+                question: "Kaksikud Anni ja Enn tähistavad täna oma sünnipäeva. Anni sai 8-aastaseks. Kui vanaks sai Enn?",
+                options: ["7-aastaseks", "8-aastaseks", "9-aastaseks", "16-aastaseks"], correct: 1,
+                rationale: "Kuna nad on kaksikud, on nad sündinud samal päeval ja on täpselt üheealised."
+            },
+            {
+                question: "Tiigil ujus 4 parti. Nende juurde lendas veel 3 parti, aga 2 vana parti ujusid kalda taha peitu. Mitu parti jäi tiigile nähtavale?",
+                options: ["5 parti", "7 parti", "9 parti", "4 parti"], correct: 0,
+                rationale: "Alguses oli 4, tuli juurde 3 (4 + 3 = 7) ja läks ära 2 (7 - 2 = 5)."
+            },
+            {
+                question: "Riiulil on 15 kruusi. 5 neist on sangaga ja ülejäänud on ilma sangata. Mitu sangata kruusi on riiulil?",
+                options: ["5 kruusi", "10 kruusi", "12 kruusi", "20 kruusi"], correct: 1,
+                rationale: "Lahutame koguarvust sangaga kruusid: 15 - 5 = 10 sangata kruusi."
+            },
+            {
+                question: "Triinul oli 1 euro. Ta ostis 40 senti maksva nätsu. Mitu senti jäi Triinule tagasi?",
+                options: ["40 senti", "50 senti", "60 senti", "70 senti"], correct: 2,
+                rationale: "Ühes euros on 100 senti. Kui lahutame sealt 40 senti, jääb järgi 60 senti (100 - 40 = 60)."
+            },
+            {
+                question: "Mitu korda saab ühest 10-st õunast võtta ära 2 õuna?",
+                options: ["1 kord", "5 korda", "10 korda", "2 korda"], correct: 0,
+                rationale: "Pärast esimest võtmist ei ole sul enam käes 10 õuna, vaid laual on juba 8 õuna. Seega 'ühest 10-st õunast' saab võtta vaid ühe korra."
+            },
+            {
+                question: "Hobune jookseb kiiresti ja tema sabas lendab kärbes. Kummal on rohkem jalgu?",
+                options: ["Hobusel", "Kärbsel", "Mõlemal on võrdselt", "Kärbsel on vähem"], correct: 1,
+                rationale: "Hobusel on 4 jalga, kuid putukatel (ka kärbsel) on alati 6 jalga."
+            },
+            {
+                question: "Potsataja leidis 14 apelsini. Ta andis Gena'le 6 tükki ja sõi ise ülejäänud ära. Mitu apelsini sõi Potsataja?",
+                options: ["6 apelsini", "7 apelsini", "8 apelsini", "10 apelsini"], correct: 2,
+                rationale: "Lahutame koguarvust Genale antud apelsinid: 14 - 6 = 8."
+            },
+            {
+                question: "Pliiats maksab 10 senti ja kustukumm maksab 8 senti. Kui palju maksavad need kaks asja kokku?",
+                options: ["12 senti", "16 senti", "18 senti", "2 senti"], correct: 2,
+                rationale: "Liidame hinnad kokku: 10 + 8 = 18 senti."
+            },
+            {
+                question: "Lepatriinul on kuus musta täppi. Tema sõbral on kahe täpi võrra rohkem. Mitu täppi on sõbral?",
+                options: ["4 täppi", "6 täppi", "8 täppi", "12 täppi"], correct: 2,
+                rationale: "Liidame kahe võrra suurema arvu saamiseks: 6 + 2 = 8 täppi."
+            },
+            {
+                question: "Janekil on joonlaud, mis on 20 sentimeetrit pikk. Ta murdis selle täpselt keskelt pooleks. Kui pikk on üks poolik joonlaud?",
+                options: ["5 sentimeetrit", "10 sentimeetrit", "15 sentimeetrit", "20 sentimeetrit"], correct: 1,
+                rationale: "Arvu 20 pool on täpselt 10, sest 10 + 10 = 20."
+            },
+            {
+                question: "Minu selja taga on seinal kell. Kell lööb täistundi. Mitu korda lööb kell, kui on täpselt keskpäev (kell 12)?",
+                options: ["1 kord", "6 korda", "12 korda", "24 korda"], correct: 2,
+                rationale: "Keskpäeval ehk kell 12 lööb kell täpselt 12 korda."
+            },
+            {
+                question: "Emal on 3 tütart ja igal tütrel on täpselt üks vend. Mitu last on emal kokku?",
+                options: ["4 last", "6 last", "3 last", "5 last"], correct: 0,
+                rationale: "See üks vend on kõigi kolme tütre jaoks sama poiss, ehk peres on 3 tütart ja 1 poeg (kokku 4 last)."
+            },
+            {
+                question: "Karjus hoidis silma peal lammastele. Ta luges kokku 12 lamba jalga. Mitu lammast oli karjamaal?",
+                options: ["2 lammast", "3 lammast", "4 lammast", "6 lammast"], correct: 1,
+                rationale: "Ühel lambal on 4 jalga. Kolmel lambal on kokku 4 + 4 + 4 = 12 jalga."
+            },
+            {
+                question: "Käes on sügis ja puudelt langevad lehed. Mitu lehte langeb ühe minutiga kuusepuult?",
+                options: ["0 lehte", "10 lehte", "100 lehte", "5 lehte"], correct: 0,
+                rationale: "Kuusepuu on okaspuu ja tal ei ole lehti, mis saaksid maha langeda."
+            },
+            {
+                question: "Taldrikul oli 7 maasikat. Liina sõi neist mõned ära ja taldrikule jäi alles 4 maasikat. Mitu maasikat Liina ära sõi?",
+                options: ["2 maasikat", "3 maasikat", "4 maasikat", "11 maasikat"], correct: 1,
+                rationale: "Lahutame algsest arvust alles jäänud maasikad: 7 - 4 = 3 maasikat."
+            },
+            {
+                question: "Rongil on 5 vagunit. Esimeses vagunis on kõige rohkem inimesi, viimases kõige vähem. Milline vagun jõuab esimesena jaama?",
+                options: ["Esimene vagun", "Viimane vagun", "Kõik korraga", "Keskmine vagun"], correct: 0,
+                rationale: "Rong liigub suunaga ettepoole, mistõttu esimene vagun jõuab alati jaama kõige esimesena."
+            },
+            {
+                question: "Laual on paberileht. Poiss lõikas selle kääridega kaheks tükiks, ja siis ühe tüki veel omakorda kaheks tükiks. Mitu paberitükki on nüüd laual?",
+                options: ["2 tükki", "3 tükki", "4 tükki", "5 tükki"], correct: 1,
+                rationale: "Esimesest lõikest tuli 2 tükki. Kui võtta üks neist ja teha pooleks, tuleb sealt 2 uut tükki plaanis olnud esimese asemele (1 + 2 = 3 tükki)."
+            },
+            {
+                question: "Martin on 9-aastane ja tema õde on 6-aastane. Mitu aastat tagasi oli Martin oma õest 3 aastat vanem?",
+                options: ["1 aasta tagasi", "2 aastat tagasi", "3 aastat tagasi", "Nad on alati sellise vahega"], correct: 3,
+                rationale: "Õe ja venna vanusevahe on alati 3 aastat (9 - 6 = 3), see ei muutu kunagi."
+            },
+            {
+                question: "Koer Muki istub majast 5 meetri kaugusel. Koer Pitsu istub majast 8 meetri kaugusel. Mitu meetrit on koerte vahemaa, kui nad istuvad ühel joonel majast samal suunal?",
+                options: ["3 meetrit", "5 meetrit", "8 meetrit", "13 meetrit"], correct: 0,
+                rationale: "Kuna nad on ühel sirgel, lahutame kaugused: 8 - 5 = 3 meetrit."
+            },
+            {
+                question: "Mis numbriga lõppeb arv, mis on ühe võrra suurem kui 19?",
+                options: ["Numbriga 0", "Numbriga 1", "Numbriga 2", "Numbriga 9"], correct: 0,
+                rationale: "Arvust 19 ühe võrra suurem on 20, ja see arv lõppeb numbriga 0."
+            },
+            {
+                question: "Klassiruumis on 4 lauda. Iga laua taga istub 2 last. Mitu last on klassis kokku?",
+                options: ["4 last", "6 last", "8 last", "10 last"], correct: 2,
+                rationale: "Nelja laua taga istub kokku 2 + 2 + 2 + 2 = 8 last."
+            },
+            {
+                question: "Kummas pikas reas on rohkem inimesi, kas reas, kus on viis paari, või reas, kus on kümme inimest üksteise taga?",
+                options: ["Viie paari reas", "Kümne inimese reas", "Mõlemas on võrdselt", "Esimeses on rohkem"], correct: 2,
+                rationale: "Viis paari tähendab 5 korda 2 inimest, mis on täpselt 10 inimest. Mõlemas reas on inimesi võrdselt."
+            },
+            {
+                question: "Päkapikk jättis sussi sisse 2 eurot. Järgmisel ööl jättis ta sinna veel 3 eurot. Mitu eurot on sussi sees nüüd, kui laps pole raha ära võtnud?",
+                options: ["1 euro", "4 eurot", "5 eurot", "6 eurot"], correct: 2,
+                rationale: "Liidame kahe öö rahasummad kokku: 2 + 3 = 5 eurot."
+            },
+            {
+                question: "Aias jooksis 4 kana ja 1 kass. Mitu jalga oli neil loomadel kokku?",
+                options: ["8 jalga", "10 jalga", "12 jalga", "16 jalga"], correct: 2,
+                rationale: "Neljal kanal on kokku 8 jalga (2+2+2+2) ja ühel kassil on 4 jalga. Kokku on 8 + 4 = 12 jalga."
+            },
+            {
+                question: "Isa pani taskusse 3 kommi. Ta andis pojale 1 kommi ja tütrele ka 1 kommi. Mitu kommi jäi isale taskusse?",
+                options: ["0 kommi", "1 komm", "2 kommi", "3 kommi"], correct: 1,
+                rationale: "Isa andis ära kokku 2 kommi, seega talle jäi alles 3 - 2 = 1 komm."
+            },
+            {
+                question: "Kevadel istutati kooliaeda 10 lillesibulat. Sügiseks kasvas neist igast ühest täpselt üks ilus lill. Mitu lille oli kooliaias?",
+                options: ["1 lill", "5 lille", "10 lille", "20 lille"], correct: 2,
+                rationale: "Kuna igast sibulast tuli üks lill, siis 10 sibulast tuli täpselt 10 lille."
+            },
+            {
+                question: "Karbis oli 6 kriiti. Kasutades joonistamiseks ära 3 kriiti, mitu kriiti on karbis alles?",
+                options: ["2 kriiti", "3 kriiti", "4 kriiti", "6 kriiti"], correct: 1,
+                rationale: "Karbis olevate kriitide arv vähenes kolme võrra: 6 - 3 = 3."
+            },
+            {
+                question: "Laual on kaks rida münte. Esimeses reas on 5 münti ja teises reas on samuti 5 münti. Mitu münti on laual kokku?",
+                options: ["5 münti", "8 münti", "10 münti", "12 münti"], correct: 2,
+                rationale: "Kahes reas on kokku 5 + 5 = 10 münti."
+            },
+            {
+                question: "Kati luges raamatust 7 lehekülge. Juku luges samast raamatust 7 lehekülge rohkem kui Kati. Mitu lehekülge luges Juku?",
+                options: ["7 lehekülge", "10 lehekülge", "14 lehekülge", "15 lehekülge"], correct: 2,
+                rationale: "Juku luges 7 lehekülge rohkem, seega liidame: 7 + 7 = 14 lehekülge."
+            },
+            {
+                question: "Maril on täna sünnipäev. Kui talle panna tordile veel 2 küünalt, oleks tordil kokku 10 küünalt. Kui vanaks sai Mari täna?",
+                options: ["7-aastaseks", "8-aastaseks", "9-aastaseks", "10-aastaseks"], correct: 1,
+                rationale: "Kuna kahe lisamisel saame 10, saame praeguse vanuse lahutades: 10 - 2 = 8-aastaseks."
+            },
+            {
+                question: "Ühes tunnis on 60 minutit. Mitu minutit kestab poole tunni pikkune multifilm?",
+                options: ["20 minutit", "30 minutit", "40 minutit", "50 minutit"], correct: 1,
+                rationale: "Pooleks jagatud 60 on täpselt 30, sest 30 + 30 = 60."
+            },
+            {
+                question: "Korvis oli 8 muna. Ema võttis sealt mõned munad koogi tegemiseks ja korvi jäi alles 6 muna. Mitu muna ema võttis?",
+                options: ["1 muna", "2 muna", "3 muna", "4 muna"], correct: 1,
+                rationale: "Ema võttis munad, mis teeb vaheks: 8 - 6 = 2 muna."
+            },
+            {
+                question: "Klassis on kaks rida pinke. Ühes reas on 4 pinki ja teises reas on 5 pinki. Mitu pinki on klassis kokku?",
+                options: ["8 pinki", "9 pinki", "10 pinki", "11 pinki"], correct: 1,
+                rationale: "Liidame ridade pingid kokku: 4 + 5 = 9 pinki."
+            },
+            {
+                question: "Kassipoeg kaalub 1 kilo. Suur koer kaalub 15 kilo rohkem kui kassipoeg. Kui palju kaalub suur koer?",
+                options: ["14 kilo", "15 kilo", "16 kilo", "20 kilo"], correct: 2,
+                rationale: "Suur koer on 15 kilo võrra raskem, seega liidame: 1 + 15 = 16 kilo."
+            },
+            {
+                question: "Poiss pani lauale 3 rida klotse, igas reas täpselt 3 klotsi. Mitu klotsi pani poiss lauale kokku?",
+                options: ["6 klotsi", "8 klotsi", "9 klotsi", "12 klotsi"], correct: 2,
+                rationale: "Kolmes reas on kokku 3 + 3 + 3 = 9 klotsi."
+            },
+            {
+                question: "Tõnu joonistas sirge joone ja pani sellele joonel ritta 4 punkti. Mitu vahet tekkis punktide vahele?",
+                options: ["2 vahet", "3 vahet", "4 vahet", "5 vahet"], correct: 1,
+                rationale: "Nagu taldrikute või puude puhul, tekib nelja punkti vahele reas täpselt 3 vahekohta."
+            },
+            {
+                question: "Õues sadas vihma. Väike varblane istus katuse all peidus. Mitu tiiba oli varblasel märjaks saanud?",
+                options: ["0 tiiba", "1 tiib", "2 tiiba", "Mõlemad tiivad"], correct: 0,
+                rationale: "Kuna varblane istus katuse all varjus, ei saanud vihm teda märjaks teha."
+            },
+            {
+                question: "Ema keetis 4 viinerit. Ta andis poole neist kassile. Mitu viinerit sai kass endale?",
+                options: ["1 viineri", "2 viinerit", "3 viinerit", "4 viinerit"], correct: 1,
+                rationale: "Nelja viineri pool on täpselt 2 viinerit (2 + 2 = 4)."
+            },
+            {
+                question: "Teet on 7-aastane. Tema vend on 3 aastat vanem. Kui vanad on vennad kahe peale kokku?",
+                options: ["10-aastased", "14-aastased", "17-aastased", "20-aastased"], correct: 2,
+                rationale: "Vend on 7 + 3 = 10-aastane. Kokku on nad seega 7 + 10 = 17-aastased."
+            },
+            {
+                question: "Kummas reas on rohkem tähti, kas sõnas 'MATEMAATIKA' või sõnas 'KOOLIVAHEAEG'?",
+                options: ["Sõnas MATEMAATIKA", "Sõnas KOOLIVAHEAEG", "Mõlemas on võrdselt", "Ei tea"], correct: 1,
+                rationale: "Sõnas 'MATEMAATIKA' on 11 tähte, aga sõnas 'KOOLIVAHEAEG' on 13 tähte, mis on rohkem."
+            },
+            {
+                question: "Poes maksab mahlapakk 1 euro. Kustukumm maksab poole vähem. Mitu senti maksab kustukumm?",
+                options: ["20 senti", "40 senti", "50 senti", "60 senti"], correct: 2,
+                rationale: "Üks euro on 100 senti, selle pool on täpselt 50 senti."
+            },
+            {
+                question: "Kastis oli 12 jalgpalli. Kehalise kasvatuse tunniks võeti sealt 8 palli ära. Mitu palli jäi kasti alles?",
+                options: ["2 palli", "4 palli", "6 palli", "8 palli"], correct: 1,
+                rationale: "Teeme lahutamise: 12 - 8 = 4 palli."
+            },
+            {
+                question: "Laual on rida: 2, 4, 6, 8... Mis arv peab tulema järgmisena?",
+                options: ["9", "10", "11", "12"], correct: 1,
+                rationale: "See on paarisarvude rida, kus iga järgmine arv on kahe võrra suurem. Pärast 8 tuleb 10."
+            },
+            {
+                question: "Toas on kaks tooli. Kummalgi toolil istub üks poiss ja hoiab käes ühte õhupalli. Mitu õhupalli on toas kokku?",
+                options: ["1 õhupall", "2 õhupalli", "3 õhupalli", "4 õhupalli"], correct: 1,
+                rationale: "Kuna poisse on 2 ja igal poisil on 1 pall, on palli arv kokku 2."
+            },
+            {
+                question: "Teel kooli leidis tüdruk maast 10-sendise mündi. Mitu senti leiaksid kaks tüdrukut kokku, kui nad kõnniksid sama teed koos?",
+                options: ["10 senti", "20 senti", "30 senti", "0 senti"], correct: 0,
+                rationale: "Münt oli maas üksainus ja tüdruk leidis selle juba ära. Koos kõndides ei teki maapinnale münte juurde."
+            },
+            {
+                question: "Karjusel oli 15 lammast. Kõik peale viie jooksid metsa laiali. Mitu lammast jäi karjusele alles?",
+                options: ["5 lammast", "10 lammast", "15 lammast", "0 lammast"], correct: 0,
+                rationale: "Lause ütleb otse: 'Kõik peale viie' jooksid ära, mis tähendabki, et need 5 tükki jäid talle alles."
+            },
+            {
+                question: "Klassis on 8 tüdrukut. Poiste arv on sama suur kui tüdrukute arv. Mitu last on klassis kokku?",
+                options: ["8 last", "12 last", "16 last", "20 last"], correct: 2,
+                rationale: "Poisse on samuti 8, seega laste koguarv on 8 + 8 = 16 last."
+            },
+            {
+                question: "Isa tõi poest 6 banaani. Ahvipuuris söödi neist ära pool. Mitu banaani jäi alles?",
+                options: ["2 banaani", "3 banaani", "4 banaani", "5 banaani"], correct: 1,
+                rationale: "Arvu 6 pool on täpselt 3, sest 3 + 3 = 6."
+            },
+            {
+                question: "Mul on käes 3 pliiatsit. Sõber andis mulle veel mõned pliiatsid ja nüüd on mul kokku 8 pliiatsit. Mitu pliiatsit sõber andis?",
+                options: ["4 pliiatsit", "5 pliiatsit", "6 pliiatsit", "7 pliiatsit"], correct: 1,
+                rationale: "Saame teada, kui lahutame lõpparvust algse arvu: 8 - 3 = 5 pliiatsit."
+            },
+            {
+                question: "Mitu päeva on kokku kahes järjestikuses nädalavahetuses?",
+                options: ["2 päeva", "3 päeva", "4 päeva", "5 päeva"], correct: 2,
+                rationale: "Ühes nädalavahetuses on laupäev ja pühapäev (2 päeva). Kahes nädalavahetuses on kokku 2 + 2 = 4 päeva."
+            },
+            {
+                question: "Paberil on kirjas arv 6. Kuidas saab sellest arvust teha arvu 9 ilma midagi juurde kirjutamata ja kustutamata?",
+                options: ["Pöörata paber tagurpidi", "Lõigata paber pooleks", "Värvida see üle", "Seda ei saa teha"], correct: 0,
+                rationale: "If pöörad numbri 6 sisaldava paberi tagurpidi, saab sellest täpselt number 9."
+            },
+            {
+                question: "Puu otsas oli 12 õuna. Juku raputas puud ja maapinnale kukkus 5 õuna. Mitu õuna jäi puu otsa alles?",
+                options: ["5 õuna", "6 õuna", "7 õuna", "8 õuna"], correct: 2,
+                rationale: "Teeme lahutamistehte: 12 - 5 = 7 õuna."
+            },
+            {
+                question: "Klassis pandi ritta 3 lauda. Iga laua taha pandi 2 tooli. Mitu tooli pandi laua taha kokku?",
+                options: ["4 tooli", "5 tooli", "6 tooli", "8 tooli"], correct: 2,
+                rationale: "Kolme laua taga on kokku toolide arv: 2 + 2 + 2 = 6 tooli."
+            },
+            {
+                question: "Sinu ees on pikk nöör. Kui teed sellesse nööri sisse 3 sõlme, mitmeks tükiks nöör jaguneb?",
+                options: ["Nöör jääb üheks tükiks", "2 tükiks", "3 tükiks", "4 tükiks"], correct: 0,
+                rationale: "Sõlmede tegemine ei lõika nööri katki, nöör jääb ikka üheks pikaks tervikuks paberil."
+            },
+            {
+                question: "Karbis on sinised ja rohelised pliiatsid. Siniseid on 4 ja rohelisi on poole vähem. Mitu pliiatsit on karbis kokku?",
+                options: ["5 pliiatsit", "6 pliiatsit", "7 pliiatsit", "8 pliiatsit"], correct: 1,
+                rationale: "Rohelisi on 4 pool ehk 2 pliiatsit. Kokku on karbis seega 4 + 2 = 6 pliiatsit."
+            },
+            {
+                question: "Koolitund algab kell 8. Tund kestab täpselt 1 tunni. Mis kell tund lõppeb?",
+                options: ["Kell 8", "Kell 9", "Kell 10", "Kell 11"], correct: 1,
+                rationale: "Liidame alguskellajale ühe tunni juurde: 8 + 1 = 9."
+            },
+            {
+                question: "Kati kogub kleepse. Tal on 10 kleepsu kassidest ja 5 kleepsu koertest. Mitu kleepsu on Katil kokku?",
+                options: ["12 kleepsu", "14 kleepsu", "15 kleepsu", "20 kleepsu"], correct: 2,
+                rationale: "Liidame kleepsud kokku: 10 + 5 = 15 kleepsu."
+            },
+            {
+                question: "Laual on 14 pirni. 4 pirni on veel toored ja ülejäänud on küpsed. Mitu küpset pirni on laual?",
+                options: ["8 pirni", "10 pirni", "12 pirni", "18 pirni"], correct: 1,
+                rationale: "Lahutame koguarvust toored pirnid: 14 - 4 = 10 küpset pirni."
+            },
+            {
+                question: "Mis on kõige väiksem kahekohaline arv matemaatikas?",
+                options: ["1", "9", "10", "11"], correct: 2,
+                rationale: "Esimene ja kõige väiksem arv, mille kirjutamiseks läheb vaja kahte numbrit, on arv 10."
+            },
+            {
+                question: "Riiulil oli 16 raamatut. 6 raamatut võeti sealt ära lugemiseks. Mitu raamatut jäi riiulile?",
+                options: ["8 raamatut", "10 raamatut", "12 raamatut", "20 raamatut"], correct: 1,
+                rationale: "Teeme lahutamistehte: 16 - 6 = 10 raamatut."
+            }
+        ];
+
+        let currentQuestions = [];
+        let currentQuestionIndex = 0;
+        let score = 0;
+        let hasAnswered = false;
+
+        // Funktsioon massiivi segamiseks (Fisher-Yates algoritm)
+        function shuffleArray(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+            return array;
+        }
+
+        // Alusta uut mängu
+        function startQuiz() {
+            // Segatakse kõik 100 küsimust ja võetakse esimesed 10
+            const shuffled = shuffleArray([...allQuestions]);
+            currentQuestions = shuffled.slice(0, 10);
+            
+            currentQuestionIndex = 0;
+            score = 0;
+            hasAnswered = false;
+            
+            // Vahetatakse vaateid
+            document.getElementById('quiz-container').classList.remove('hidden');
+            document.getElementById('result-container').classList.add('hidden');
+            
+            updateScoreDisplay();
+            showQuestion();
+        }
+
+        // Uuenda skoori kuvamist
+        function updateScoreDisplay() {
+            document.getElementById('score-text').innerText = `Skoor: ${score}`;
+        }
+
+        // Kuva praegune küsimus
+        function showQuestion() {
+            hasAnswered = false;
+            document.getElementById('feedback-container').classList.add('hidden');
+            
+            const qData = currentQuestions[currentQuestionIndex];
+            
+            // Uuenda tekstid ja progressiriba
+            document.getElementById('progress-text').innerText = `Küsimus ${currentQuestionIndex + 1}/10`;
+            document.getElementById('question-text').innerText = qData.question;
+            
+            const progressPercent = ((currentQuestionIndex + 1) / 10) * 100;
+            document.getElementById('progress-bar').style.width = `${progressPercent}%`;
+            
+            // Genereeri vastusevariandid (ja sega ka valikud ära, et õige vastus poleks alati samal kohal)
+            const optionsContainer = document.getElementById('options-container');
+            optionsContainer.innerHTML = '';
+            
+            // Loome massiivi objektidest, et säilitada algne indeks
+            let mappedOptions = qData.options.map((opt, idx) => ({ text: opt, isCorrect: idx === qData.correct }));
+            // Segame valikud ära
+            mappedOptions = shuffleArray(mappedOptions);
+            
+            mappedOptions.forEach((option) => {
+                const button = document.createElement('button');
+                button.innerText = option.text;
+                button.className = "w-full text-left bg-gray-50 hover:bg-indigo-50 border-2 border-gray-200 text-gray-700 font-medium py-4 px-6 rounded-2xl transition shadow-sm active:scale-[0.98] focus:outline-none text-lg";
+                button.onclick = () => handleAnswer(option.isCorrect, button, mappedOptions);
+                optionsContainer.appendChild(button);
+            });
+        }
+
+        // Vastuse valimine
+        function handleAnswer(isCorrect, clickedButton, mappedOptions) {
+            if (hasAnswered) return; // Takistab mitu korda klikkimist
+            hasAnswered = true;
+            
+            const qData = currentQuestions[currentQuestionIndex];
+            const optionsContainer = document.getElementById('options-container');
+            const buttons = optionsContainer.getElementsByTagName('button');
+            
+            if (isCorrect) {
+                score++;
+                updateScoreDisplay();
+                clickedButton.classList.remove('bg-gray-50', 'hover:bg-indigo-50', 'border-gray-200');
+                clickedButton.classList.add('bg-emerald-100', 'border-emerald-500', 'text-emerald-900', 'font-bold');
+                
+                showFeedback(true, "Õige vastus! 🎉", qData.rationale);
+            } else {
+                clickedButton.classList.remove('bg-gray-50', 'hover:bg-indigo-50', 'border-gray-200');
+                clickedButton.classList.add('bg-red-100', 'border-red-500', 'text-red-900', 'font-bold');
+                
+                // Otsi ja märgi roheliseks see nupp, mis oli tegelikult õige
+                mappedOptions.forEach((opt, idx) => {
+                    if (opt.isCorrect) {
+                        buttons[idx].classList.remove('bg-gray-50', 'border-gray-200');
+                        buttons[idx].classList.add('bg-emerald-100', 'border-emerald-500', 'text-emerald-900', 'font-bold');
+                    }
+                });
+                
+                showFeedback(false, "Oi, seekord läks valesti! 🤔", qData.rationale);
+            }
+
+            // Muuda ülejäänud nupud mitteaktiivseks
+            for (let btn of buttons) {
+                btn.disabled = true;
+                if (!btn.classList.contains('border-emerald-500') && !btn.classList.contains('border-red-500')) {
+                    btn.classList.add('opacity-50');
+                }
+            }
+        }
+
+        // Kuva tagasiside kastike
+        function showFeedback(isCorrect, title, rationale) {
+            const container = document.getElementById('feedback-container');
+            const iconSpan = document.getElementById('feedback-icon');
+            const titleH3 = document.getElementById('feedback-title');
+            const rationaleP = document.getElementById('rationale-text');
+            const nextBtn = document.getElementById('next-btn');
+            
+            container.classList.remove('hidden');
+            titleH3.innerText = title;
+            rationaleP.innerText = rationale;
+            
+            if (isCorrect) {
+                container.className = "bg-emerald-50 rounded-2xl p-4 border-2 border-dashed border-emerald-300 mb-6";
+                iconSpan.innerText = "⭐";
+                titleH3.className = "font-bold text-lg text-emerald-800";
+            } else {
+                container.className = "bg-amber-50 rounded-2xl p-4 border-2 border-dashed border-amber-300 mb-6";
+                iconSpan.innerText = "💡";
+                titleH3.className = "font-bold text-lg text-amber-800";
+            }
+            
+            if (currentQuestionIndex === 9) {
+                nextBtn.innerText = "Vaata tulemust 🏁";
+            } else {
+                nextBtn.innerText = "Järgmine küsimus →";
+            }
+        }
+
+        // Järgmise küsimuse nupp
+        document.getElementById('next-btn').onclick = function() {
+            currentQuestionIndex++;
+            if (currentQuestionIndex < 10) {
+                showQuestion();
+            } else {
+                showResults();
+            }
+        };
+
+        // Näita lõpuekraani
+        function showResults() {
+            document.getElementById('quiz-container').classList.add('hidden');
+            document.getElementById('result-container').classList.remove('hidden');
+            
+            document.getElementById('final-score-text').innerText = `Sinu tulemus: ${score} / 10`;
+            
+            const msgP = document.getElementById('feedback-message');
+            if (score === 10) {
+                msgP.innerText = "Täiesti uskumatu! Sa lahendasid kõik nupukad ülesanded õigesti. Oled suurepärane loogiline mõtleja! 🥇";
+            } else if (score >= 7) {
+                msgP.innerText = "Väga tubli! Lugesid küsimusi hoolega ja hammustasid peaaegu kõik pähklid katki! 🌟";
+            } else if (score >= 4) {
+                msgP.innerText = "Hea tulemus! Mõned küsimused olid päris kavalate krutsifiksidega. Proovi uuesti uute ülesannetega! 🚀";
+            } else {
+                msgP.innerText = "Harjutamine teeb meistriks! Need ülesanded püüdsidki sind tähelepanuga haneks tõmmata. Proovi uuesti ja ole veelgi täpsem! 💪";
+            }
+        }
+
+        // Alusta uuesti nupp
+        document.getElementById('restart-btn').onclick = startQuiz;
+
+        // Käivita rakendus esimesel laadimisel
+        window.onload = startQuiz;
+    </script>
+</body>
+</html>
